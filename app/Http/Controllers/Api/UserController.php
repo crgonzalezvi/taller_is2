@@ -7,27 +7,29 @@ use App\Http\Requests\BulkStoreUsersRequest;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(User::all());
+        $perPage = $request->query('per_page', 100);
+        return response()->json(User::paginate($perPage));
     }
 
-    public function emails(): JsonResponse
+    public function emails(Request $request): JsonResponse
     {
-        return response()->json(User::all(['id', 'email']));
+        $perPage = $request->query('per_page', 100);
+        return response()->json(User::select('id', 'email')->paginate($perPage));
     }
 
-    public function overTwenty(): JsonResponse
+    public function overTwenty(Request $request): JsonResponse
     {
+        $perPage = $request->query('per_page', 100);
         $cutoff = Carbon::now()->subYears(20)->startOfDay();
 
-        $users = User::all()->filter(
-            fn (User $user) => $user->birth_date && $user->birth_date->lte($cutoff)
-        )->values();
+        $users = User::whereDate('birth_date', '<=', $cutoff)->paginate($perPage);
 
         return response()->json($users);
     }
